@@ -1,0 +1,64 @@
+ROLLBACK;
+SELECT 
+NF.*,
+NC.*,
+CDD.iatacode AS departureiatacode,
+CDD.countryisocode AS departurecountryisocode,
+CDA.iatacode AS arrivaliatacode,
+CDA.countryisocode AS arrivalcountryisocode
+FROM(
+(SELECT DISTINCT
+airlineiatacode,
+farenettimestamp::DATE AS fareNetDate,
+departureairportiatacode,
+arrivalairportiatacode,
+journeytype,
+flighttype,
+departuredate,
+returndate,
+outboundfareclass,
+inboundfareclass,
+siteedition,
+devicecategory,
+emcid,
+farenetid,
+totalpriceusd,
+passengercount AS searchpassengercount
+FROM datacore.public.normalized_farenet_001
+WHERE "__createdat">='2021-06-01'::TIMESTAMP AND "__createdat" < CURRENT_DATE::TIMESTAMP
+AND airlineiatacode = 'XX'
+AND departureairportiatacode is not null
+AND arrivalairportiatacode is not null
+AND emcid is not null AND emcid != 'n/a' AND emcid!= 'timeout') NF
+
+LEFT JOIN
+
+(SELECT DISTINCT
+airlineiatacode AS "nc_airlineiatacode",
+farenetconfirmationtimestamp::DATE AS "nc_farenetconfirmationdate",
+departureairportiatacode AS "nc_departureairportiatacode",
+arrivalairportiatacode AS "nc_arrivalairportiatacode",
+journeytype AS "nc_journeytype",
+flighttype AS "nc_flighttype",
+departuredate AS "nc_departuredate",
+returndate AS "nc_returndate",
+outboundfareclass AS "nc_outboundfareclass",
+inboundfareclass AS "nc_inboundfareclass",
+siteedition AS "nc_siteedition",
+devicecategory AS "nc_devicecategory",
+emcid AS "nc_emcid",
+farenetconfirmationid,
+totalpriceusd AS revenue,
+passengercount AS bookingpassengercount
+FROM datacore.public.normalized_farenet_confirmation_001
+WHERE "__createdat">='2021-06-01'::TIMESTAMP AND "__createdat" < CURRENT_DATE::TIMESTAMP
+AND airlineiatacode = 'XX'
+AND departureairportiatacode is not null
+AND arrivalairportiatacode is not null) AS NC
+
+ON (NF.emcid=NC.nc_emcid
+AND NF."fareNetDate" <= NC."nc_farenetconfirmationdate"))
+
+LEFT JOIN datacore.custom.latest_core_dictionary CDD on departureairportiatacode = CDD.iatacode
+LEFT JOIN datacore.custom.latest_core_dictionary CDA on arrivalairportiatacode = CDA.iatacode
+;
