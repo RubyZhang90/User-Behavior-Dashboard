@@ -27,6 +27,7 @@ passengercount AS searchpassengercount
 FROM datacore.public.normalized_farenet_001
 WHERE "__createdat">='2021-06-01'::TIMESTAMP AND "__createdat" < CURRENT_DATE::TIMESTAMP
 AND airlineiatacode = 'XX'
+AND isusersearch=TRUE
 AND departureairportiatacode is not null
 AND arrivalairportiatacode is not null
 AND emcid is not null AND emcid != 'n/a' AND emcid!= 'timeout') NF
